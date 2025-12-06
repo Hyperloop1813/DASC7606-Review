@@ -1,4 +1,4 @@
-# DASC7606 Final - Transformer - summarized by hyperloop
+# DASC7606 Final - Transformer - summerized by hyperloop
 
 # Section 0 Exam Scope
 

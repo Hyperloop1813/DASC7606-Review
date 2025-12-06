@@ -1,4 +1,4 @@
-# DASC7606 Final - CNN & CV - summerized by hyperloop
+# DASC7606 Final - CNN & CV - summarized by hyperloop
 
 # Section 0 Exam Scope
 ![](./Scope.png)
