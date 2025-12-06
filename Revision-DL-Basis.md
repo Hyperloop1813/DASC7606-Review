@@ -1,4 +1,4 @@
-# DASC7606 Final - Deep Learning Basis - summerized by hyperloop
+# DASC7606 Final - Deep Learning Basis - summarized by hyperloop
 
 # Section 0 Exam Scope
 ![](./Scope.png)

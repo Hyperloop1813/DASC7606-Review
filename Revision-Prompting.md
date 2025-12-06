@@ -1,4 +1,4 @@
-# DASC7606 Final - Prompting - summerized by hyperloop
+# DASC7606 Final - Prompting - summarized by hyperloop
 
 # Section 0 Exam Scope
 
