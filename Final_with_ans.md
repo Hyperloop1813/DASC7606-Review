@@ -1,4 +1,4 @@
-# DASC7606 Final - summerized by hyperloop
+# DASC7606 Final - summarized by hyperloop
 
 # Section 0 Scope
 
@@ -426,7 +426,6 @@ Inception 模块（包含 1×1 卷积降维）
 ![1765093189005](image/Finalwithans/1765093189005.png)
 ![1765093193947](image/Finalwithans/1765093193947.png)
 ![1765093200242](image/Finalwithans/1765093200242.png)
-
 
 ## Inception 架构与 Bottleneck 详解
 
