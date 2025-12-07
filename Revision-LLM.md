@@ -328,6 +328,7 @@ L \sim (1/X)^{\alpha}, \text{ 其中X=N, D, C}
 
 ---
 ![1764994221203](image/Revision-LLM/1764994221203.png)
+![1765079019786](image/Revision-LLM/1765079019786.png)
 ## GPT-3.5 / InstructGPT (2022)
 
 - **训练目标**：让模型更好地遵循用户意图（人类偏好）
