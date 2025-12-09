@@ -1,4 +1,4 @@
-# DASC7606 Final - Prompting - summerized by hyperloop
+# DASC7606 Final - Prompting - summarized by hyperloop
 
 # Section 0 Exam Scope
 
@@ -208,7 +208,7 @@ CO-STAR 用来把 Prompt 写得**清晰、可控、可复用**：
 - **CoD 证明：LLM 的有效推理不一定需要冗长输出；用“最小草稿”也能保持推理质量，同时显著节省 token 与时间。**
 
 ---
-# SSection 4 P-tuning
+# Section 4 P-tuning
 ![1764946363969](image/Revision-Prompting/1764946363969.png)
 ## Prompt-tuning / P-tuning 是什么？
 
