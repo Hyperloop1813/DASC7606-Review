@@ -746,11 +746,7 @@ Transformer的并行架构使其能够支持更大的嵌入维度和隐藏层维
 
 ### Answer
 
-# Question 8: Masking（中文 + English，简短版）
-
----
-
-## (a) Masking 在 Transformer 里怎么用？
+### (a) Masking 在 Transformer 里怎么用？
 ### 中文
 - **目的**：限制注意力计算时“能看见哪些 token”，避免无效信息或信息泄露。  
 - **Padding mask**：把 `[PAD]` 位置的 attention logits 设为 `-∞`（或很小），softmax 后权重≈0，避免模型关注填充。  
@@ -764,7 +760,7 @@ Transformer的并行架构使其能够支持更大的嵌入维度和隐藏层维
 - **How**: apply the mask to attention scores **before softmax** (add `-∞` or use a 0/1 mask).
 
 
-## (b) Masking 在 BERT 里怎么用？
+### (b) Masking 在 BERT 里怎么用？
 ### 中文
 - **训练目标是 MLM（Masked Language Modeling）**：随机选一部分 token（常见约 15%）作为“预测目标”。  
 - **输入侧 mask**：这些位置通常被替换成 `[MASK]`（或随机词/保持不变），让模型利用**双向上下文**来猜原词。  
@@ -778,7 +774,7 @@ Transformer的并行架构使其能够支持更大的嵌入维度和隐藏层维
 - **Loss masking**: compute MLM loss only on the selected masked positions.
 
 
-## (c) Masking 如何用于视觉里的遮挡敏感性（occlusion sensitivity）？
+### (c) Masking 如何用于视觉里的遮挡敏感性（occlusion sensitivity）？
 ### 中文
 - **核心思想**：人为遮挡（mask）图像的某个局部区域，观察模型输出/置信度变化。  
 - **做法**：用滑动窗口把一块区域替换为 0/均值/模糊块等“遮挡值”，对每个位置重复一次推理。  
