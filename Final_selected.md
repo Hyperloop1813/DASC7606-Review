@@ -170,6 +170,28 @@ Use **Momentum (heavy-ball)** or **Nesterov momentum**. Accumulating past gradie
 
 ### (a) (9 pts) 选择 Precision 或 Recall，并解释
 
+真实\预测 | 预测为正 (P) | 预测为负 (N)
+---|---:|---:
+真实为正 (P) | **TP** (True Positive) | **FN** (False Negative)
+真实为负 (N) | **FP** (False Positive) | **TN** (True Negative)
+
+- TP：真阳（预测正，且真实正）
+- FP：假阳（预测正，但真实负）
+- FN：假阴（预测负，但真实正）
+- TN：真阴（预测负，且真实负）
+
+\[
+\text{Acc}=\frac{TP+TN}{TP+FP+FN+TN}
+\]
+
+\[
+\text{Precision}=\frac{TP}{TP+FP}
+\]
+
+\[
+\text{Recall}=\frac{TP}{TP+FN}
+\]
+
 ### 中文题目分析
 核心看你更怕哪种错误：  
 - **更怕漏报（False Negative, FN）** → 选 **Recall（召回率）**  
@@ -274,9 +296,106 @@ Actions: lower learning rate, use a stable optimizer, apply gradient clipping, v
 
 ![Q10](./2023MayD/1.png)
 
+---
+
 ## Q6 2022 May 1
 
 ![Q11](./2022May1/1.png)
+
+
+### a) L2 正则化是什么？如何缓解过拟合？
+**中文：**
+L2 正则化是在原损失上加入“权重平方和”的惩罚项（weight decay）。  
+它会倾向于把参数压小，限制模型复杂度，减少对训练集噪声的过度拟合。  
+权重更小通常意味着函数更平滑、对输入扰动不那么敏感，从而提升泛化能力。
+
+**English:**
+L2 regularization adds a penalty proportional to the squared norm of the weights (weight decay) to the loss.  
+It discourages large weights, effectively reducing model complexity.  
+Smaller weights often yield smoother functions and less sensitivity to noise, improving generalization.
+
+### b) 感知机能计算 XOR 吗？解释
+**中文：**
+不能。单层感知机是线性分类器，只能学习线性可分的决策边界。  
+XOR 数据在二维空间是线性不可分的，无法用一条直线分开正负类。  
+需要至少一层隐藏层（多层感知机）或非线性特征变换才能实现。
+
+**English:**
+No. A single-layer perceptron is a linear classifier and can only represent linearly separable decision boundaries.  
+XOR is not linearly separable in the input space.  
+You need at least one hidden layer (MLP) or a nonlinear feature mapping to compute XOR.
+
+### c) 使用 ReLU 时，神经网络还能任意逼近任意函数吗？
+**中文：**
+在一定条件下可以。通用逼近定理表明：带非线性激活的前馈网络（含 ReLU）  
+用足够多的隐藏单元/宽度，可在紧致区域上把连续函数逼近到任意精度。  
+注意这通常是“存在性”结论，不保证训练一定能找到该解。
+
+**English:**
+Yes, under standard assumptions. The universal approximation theorem implies that feedforward networks with a nonlinearity (including ReLU)  
+can approximate any continuous function on a compact domain arbitrarily well given sufficient width.  
+This is an existence result and does not guarantee optimization will find the approximating parameters.
+
+
+### d) Sigmoid 激活函数的至少三个缺点
+**中文：**
+1) 饱和区梯度接近 0，容易造成梯度消失，训练深层网络困难。  
+2) 输出非零均值（0~1），导致梯度更新偏移，收敛可能更慢。  
+3) 指数运算带来数值不稳定/计算开销，相比 ReLU 更慢。  
+（也常见：容易在大正/负输入时进入饱和，学习停滞。）
+
+**English:**
+1) Saturation causes near-zero gradients → vanishing gradients in deep networks.  
+2) Outputs are not zero-centered (0–1), which can slow optimization due to biased gradients.  
+3) Uses exponentials → can be slower and may suffer numerical issues for large magnitudes.
+
+### e) Adam 相比 RMSProp 的主要优势是什么？
+**中文：**
+Adam 在 RMSProp 的“自适应二阶矩（梯度平方的滑动平均）”基础上，  
+还引入了一阶矩（动量：梯度的滑动平均）并做偏差校正。  
+因此通常收敛更快、更稳定，尤其在稀疏梯度或噪声较大的情况下表现更好。
+
+**English:**
+Adam extends RMSProp by additionally keeping a first-moment estimate (momentum: moving average of gradients) with bias correction,  
+besides the second-moment (moving average of squared gradients).  
+This often yields faster and more stable convergence, especially with noisy or sparse gradients.
+
+### f) 深层网络可能比浅层更差的主要原因？哪种结构缓解？
+**中文：**
+主要原因之一是深层网络更难优化，容易出现梯度消失/爆炸，导致训练不到位（甚至退化）。  
+此外也更易过拟合或陷入不良局部行为。  
+课程中常用来缓解该问题的结构：**残差网络 ResNet（skip/residual connections）**，让梯度更容易传播。
+
+**English:**
+A key reason is optimization difficulty in deep networks (vanishing/exploding gradients), causing poor training and degradation.  
+Deeper models can also overfit or get stuck in bad regimes.  
+An architecture designed to alleviate this is **ResNet with residual/skip connections**, improving gradient flow.
+
+### g) LSTM 如何缓解梯度消失？
+**中文：**
+LSTM 通过“细胞状态（cell state）”提供近似线性的长期信息通道。  
+输入门/遗忘门/输出门控制信息写入、保留与输出，使关键记忆可长期保存。  
+这种门控机制能让误差信号沿 cell state 更稳定地反传，从而减轻梯度消失。
+
+**English:**
+LSTMs maintain a cell state that acts as an almost-linear highway for long-term information.  
+Gates (input/forget/output) control what to write, keep, and expose.  
+This gated pathway helps gradients propagate over long time spans, mitigating vanishing gradients.
+
+
+### h) Transformers 的至少一个缺点
+**中文：**
+自注意力在序列长度为 n 时计算/显存复杂度通常是 **O(n²)**，长序列代价很高。  
+另外通常需要较大数据与算力才能训练得好，对小数据集不如某些结构稳定。  
+（也可提：缺乏内置的递归/卷积归纳偏置，需位置编码处理顺序。）
+
+**English:**
+Self-attention typically has **O(n²)** time/memory complexity in sequence length, making long-context processing expensive.  
+Transformers often require large datasets and compute to train effectively and may be less data-efficient.  
+(Also: they need positional encodings and lack built-in recurrence/convolution inductive bias.)
+
+
+---
 
 ## Q7 2022 May 1
 
@@ -455,13 +574,10 @@ It detects the same horizontal edges but with the opposite polarity/sign compare
 
 ### (c)
 
-在将 F1 和 F2 的结果相加之前，常用 ReLU 作为激活函数，因为：
+![1765354127577](image/Final_selected/1765354127577.png)
 
-边缘检测结果可能有正有负，但负值可能表示反向边缘，有时我们只关心边缘强度而不关心方向（或者两个方向都保留为正）。
 
-如果使用 ReLU，可以去除负响应，只保留正边缘，避免正负抵消在相加时丢失信息。
-
-另一种选择是 绝对值，但标准 CNN 用 ReLU 更常见。
+![1765354084546](image/Final_selected/1765354084546.png)
 
 ---
 
