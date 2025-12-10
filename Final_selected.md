@@ -437,6 +437,14 @@ $\begin{pmatrix} 3 & 3 & 3 & 3 & 3 \\ 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 \\ 
 
 ### (b)
 
+它们本质是在做垂直方向梯度（检测水平边缘）：
+
+F1：检测“上暗下亮”的水平边缘（从上到下像素值增大时输出为正）。
+在本题里会对 第1行(0)→第2行(1) 这种上升边缘产生正响应。
+
+F2：检测“上亮下暗”的水平边缘（从上到下像素值减小时输出为正）。
+在本题里会对 第6行(1)→第7行(0) 这种下降边缘产生正响应。
+
 F1Horizontal Edge Detector: (Top $0 \to 1$ and Bottom $1 \to 0$ with $\mathbf{+3}$ and $\mathbf{-3}$ response).
 
 It detects changes in intensity along the vertical axis (a horizontal edge). It highlights the region where the patch below is brighter than the patch above it.
@@ -499,6 +507,12 @@ This filter is primarily used for two purposes: Dimensionality Reduction (the "b
 
 ![Q4](./2024DecABD/5.jpg)
 ![Q4](./2024DecABD/6.jpg)
+![1765285582321](image/Final_selected/1765285582321.png)
+![1765285605797](image/Final_selected/1765285605797.png)
+![1765285621341](image/Final_selected/1765285621341.png)
+![1765285632933](image/Final_selected/1765285632933.png)
+
+---
 
 ## Q5 2024 Dec C
 
@@ -529,16 +543,15 @@ This filter is primarily used for two purposes: Dimensionality Reduction (the "b
 
 ### (c) self-attention 后 dog 的嵌入如何变化
 
-self-attention 会让每个位置的输出嵌入变成其他所有位置输入的加权组合。
+self-attention 会把 dog 的表示变成“带上下文的表示”：它不再只表达“dog”这个词本身，而会融合同一句里其他词的信息（尤其是和它最相关的词）。
 
-这里 “dog” 在位置 6，它的新嵌入会融合 “Bill hate #s big black dog #s” 中其他词的信息。
-例如：
+在这句输入里（… big, black, dog …），直觉上 dog 会对 big、black 分到较高注意力权重，所以更新后的 dog 向量会更“像” big/black 的组合——比如：
 
-“big” 和 “black” 是形容词，可能修饰 “dog”，因此 “dog” 的嵌入会获得这些形容词的特征。
+Dim4 可能变大：因为 black 的 Dim4 很大 (3.5)，big 的 Dim4 也有 1.0，融合后 dog 的 Dim4 往上走很正常
 
-“Bill hate #s” 可能表达情感，也可能影响 “dog” 的上下文表示。
+表示上会更接近“big black dog”这种短语语义，而不是孤立的 “dog”
 
-所以 “dog” 的嵌入会从独立的 (-2.0, 0.5, 0.0, 0.5) 变成一个包含全局上下文信息的向量，更少依赖于原始词嵌入，更多依赖于它在句子中的语义角色。
+一句话：dog 的 embedding 会被拉向与它强相关的上下文词（big/black）的方向，变成“语境化 embedding”。
 
 ---
 
@@ -640,71 +653,91 @@ Transformer的并行架构使其能够支持更大的嵌入维度和隐藏层维
 
 ### Answer by GPT
 
-### (a) (6 pts) Three main advantages that make Transformer superior to RNN/LSTM
+### (a) (6 pts) Transformer 相比 RNN/LSTM 的三个主要优势是什么？
+### 中文答案
+1) **任意 token 间的直接交互（长距离依赖更容易）**  
+   Self-Attention 让任意两个位置的 token 可以在同一层里直接“看见”对方，不需要像 RNN 那样逐步传递信息，**依赖路径更短**，更擅长建模长程依赖。
 
-Advantages:
+2) **交互是“动态加权”的（更灵活的对齐/关联）**  
+   注意力权重根据当前 token 的 Query 与其他 token 的 Key 相似度动态决定，能针对不同上下文选择不同关联（例如指代消解、对齐翻译等）。
 
-Parallel computation –
+3) **缓解“固定大小表示”的信息瓶颈（embedding/表示容量更合理）**  
+   传统 RNN 编码器常把整句压到一个固定维度的 hidden state/context vector，句子越长越容易丢信息；Transformer 保留**每个 token 的上下文化表示**，并通过多层/多头在多个子空间组合信息，**不靠单个固定向量硬压缩整句**。
 
-Transformers process all tokens simultaneously instead of sequentially (no recurrence).
+### English Answer
+1) **Direct token-to-token interaction (better long-range dependencies)**  
+   Self-attention allows any two tokens to interact within a layer, avoiding step-by-step propagation in RNNs, thus a **shorter dependency path** and stronger long-range modeling.
 
-→ Much faster training, especially on GPUs.
+2) **Dynamic, content-based weighting (flexible alignment/relations)**  
+   Attention weights are computed from Query–Key similarity, enabling **context-dependent** selection of relevant tokens (e.g., coreference, alignment).
 
-Long-range dependency modeling –
+3) **Less fixed-size bottleneck (representation/embedding capacity)**  
+   RNN encoder(-decoder) often compresses a whole sequence into a fixed-size state, causing an information bottleneck for long inputs. Transformers keep **contextualized representations for all tokens**, combining them across layers/heads instead of forcing everything into one fixed vector.
 
-Self-attention lets every token directly attend to every other token.
+### (b) (4 pts) Transformer 如何解决你在 (a) 指出的 RNN/LSTM 问题？
+### 中文答案
+- 用 **Self-Attention** 实现全局信息交互：每个 token 通过注意力直接聚合其他 token 的信息，长距离依赖不再依赖逐步传递。  
+- 用 **并行计算**（矩阵乘法）在训练时一次处理所有位置，避免 RNN 的串行依赖导致的效率瓶颈。  
+- 用 **多头注意力 + 多层堆叠** 在不同子空间/不同层次捕获多种关系，减少单一 hidden state 的容量限制与信息丢失。  
+- 用 **残差连接 + LayerNorm** 改善深层训练稳定性（缓解梯度问题）。
 
-→ Captures global context better than RNNs/LSTMs, which suffer from vanishing gradients over long sequences.
+### English Answer
+- **Self-attention** enables global token interaction in one hop, improving long-range dependency modeling.  
+- **Parallelization**: all positions are processed simultaneously via matrix operations, unlike the sequential nature of RNN/LSTM.  
+- **Multi-head + multi-layer** representations capture multiple relations/subspaces, reducing the fixed hidden-state bottleneck.  
+- **Residual + LayerNorm** improves optimization stability for deep networks.
 
-Fixed embedding dimension (independent of sequence length) –
 
-Word embeddings and positional encodings have a constant size.
+### (c) (6 pts) 用类比解释注意力中的 K, Q, V（两种场景）
+### (i) 超市找货：人拿着商品名，在货架扫描标签
+#### 中文
+- **Query (Q)**：顾客“想找的商品名/需求”（我在找什么）  
+- **Key (K)**：货架上每个商品的“标签名/索引信息”（它是谁/怎么被匹配）  
+- **Value (V)**：商品本身或商品的详细信息（匹配到了以后“取回什么内容”）
 
-→ Enables stable representations regardless of input length.
+#### English
+- **Query (Q)**: the shopper’s desired item name (what I’m looking for)  
+- **Key (K)**: shelf label identifiers used for matching (how items are indexed)  
+- **Value (V)**: the actual item/info retrieved after matching (what you get)
 
-### (b) (4 pts) How Transformer solves RNN/LSTM problems
+### (ii) 给乘客分配最近的 Uber 车
+#### 中文
+- **Query (Q)**：乘客请求（位置/需求向量，如“我在哪、要什么类型车”）  
+- **Key (K)**：每辆车的可匹配特征（位置、状态等，用来算“近不近/合不合适”）  
+- **Value (V)**：被选中车辆的服务信息（车辆ID、预计到达时间、司机信息等，最终输出/聚合的内容）
 
-Removes sequential dependency: self-attention computes relationships among tokens in parallel, avoiding step-by-step recurrence.
+#### English
+- **Query (Q)**: passenger request (pickup location/requirements)  
+- **Key (K)**: features for each car used to match (location/availability)  
+- **Value (V)**: the car/service details returned (car ID, ETA, driver info)
 
-Handles long context: attention weights connect distant words directly (no gradient decay through time).
 
-Stable embeddings: constant-dimension positional + word embeddings replace hidden states whose size and quality degrade over long sequences.
+### (d) (3 pts) Encoder-Decoder Attention 如何实现？为什么这么做？
+### 中文答案
+- **实现方式（Cross-Attention）**：在 decoder 的每一层中，先做 masked self-attention（只看已生成的目标端 token），再做 **encoder-decoder attention**：  
+  - **Q 来自 decoder 当前层的表示**（目标端当前 token “要问什么”）  
+  - **K 和 V 来自 encoder 输出**（源端各 token 的上下文表示，作为可查询的“记忆库”）  
+- **原因**：生成每个目标词时，decoder 需要从源句中挑选最相关的信息（对齐/翻译/条件生成），所以让 decoder 用 Q 去“查询” encoder 的 K/V，从而得到与当前生成位置最相关的源端内容。
 
-### (c) (6 pts) Interpretation of K, Q, V (Keys, Queries, Values)
+### English Answer
+- **Implementation (Cross-Attention)**: In each decoder layer, after masked self-attention, perform encoder–decoder attention where  
+  - **Q comes from decoder states** (what the target token is asking for)  
+  - **K and V come from encoder outputs** (source-token memory)  
+- **Reason**: The decoder must condition each generated token on the most relevant source tokens (alignment/conditioning), so it queries encoder memory via Q against K/V.
 
-Scenario	Analogy	Explanation
-(i) Supermarket example	- Each person = a Query (Q) (they are “asking” for something).
 
-- Each shelf label = a Key (K) (what items are available).
-- Each item on the shelf = a Value (V) (the actual content retrieved).	The person (Q) scans all shelves (K) to find the best match and then picks the corresponding item (V).
-  (ii) Uber example	- Each passenger request = a Query (Q).
-- Each car’s location = a Key (K).
-- Each car’s details (driver info, ETA, etc.) = a Value (V).	The system computes attention (similarity) between passenger Q and car K to assign the closest car (retrieve its V).
+### (e) (4 pts) Transformer 的主要缺点/局限是什么？
+### 中文答案
+1) **计算与显存开销大（自注意力 O(n²)）**：序列长度 n 变大时，注意力矩阵是 n×n，时间/内存开销快速上升。  
+2) **对位置/局部结构的归纳偏置弱**：不像 CNN/RNN 天生强调局部与顺序，需要位置编码、或额外结构来补足。  
+3) **数据与算力需求高**：通常需要更多训练数据与更大算力才能学得稳定、泛化好。  
+4) **自回归生成仍然串行**：虽然训练可并行，但推理（逐 token 生成）仍是一步步生成，延迟较高。
 
-### (d) (3 pts) Encoder-decoder attention mechanism
-
-In encoder–decoder attention, the decoder’s queries (Q) attend to the encoder’s output keys (K) and values (V).
-
-This lets each decoder token focus on the most relevant encoder tokens when generating output (e.g., aligning target words with source words in translation).
-
-Reason: enables information flow from the input sentence (encoder) to the output sentence (decoder) for accurate sequence generation.
-
-### (e) (4 pts) Shortcomings of Transformer architecture
-
-High computational and memory cost:
-
-Self-attention scales as O(n²) with sequence length.
-
-Requires large datasets to train effectively.
-
-Limited inductive bias for sequential order:
-
-Positional encoding is less intuitive than recurrence for time-dependent data.
-
-Interpretability and efficiency issues:
-
-Many attention heads are redundant; not easily interpretable.
-
+### English Answer
+1) **High compute/memory (self-attention is O(n²))** for long sequences.  
+2) **Weaker inductive bias for locality/order**, relying on positional encodings or additional structure.  
+3) **Data/compute hungry** to train well at scale.  
+4) **Autoregressive decoding is still sequential** at inference, causing latency.
 ---
 
 ## Q5 2025 May
@@ -713,37 +746,51 @@ Many attention heads are redundant; not easily interpretable.
 
 ### Answer
 
-### (a) Transformer 中的 Masking
+# Question 8: Masking（中文 + English，简短版）
 
-在 Transformer 中，Masking 主要用于 Decoder 的自注意力层，目的是防止在训练时“偷看”未来的信息。
+---
 
-在自回归生成任务（如机器翻译）中，Decoder 在预测第 t 个位置时，只能使用前 t 个位置的信息。
+## (a) Masking 在 Transformer 里怎么用？
+### 中文
+- **目的**：限制注意力计算时“能看见哪些 token”，避免无效信息或信息泄露。  
+- **Padding mask**：把 `[PAD]` 位置的 attention logits 设为 `-∞`（或很小），softmax 后权重≈0，避免模型关注填充。  
+- **Causal / Look-ahead mask（decoder 自回归）**：对未来位置 \(j>i\) 设为 `-∞`，保证第 \(i\) 个 token 只能看过去和自己。  
+- **实现**：在 softmax 前对注意力分数矩阵加 mask（加 `-∞` 或乘 0/1 mask）。
 
-通过 注意力掩码（一个下三角为 0、上三角为 -inf 的矩阵），将未来位置的注意力权重设为 0，确保模型只能关注已生成的部分。
+### English
+- **Goal**: control which tokens each position can attend to (avoid invalid attention and information leakage).  
+- **Padding mask**: set attention logits on `[PAD]` positions to `-∞` so their softmax weight is ~0.  
+- **Causal / look-ahead mask (autoregressive decoder)**: mask future positions \(j>i\) so token \(i\) only attends to past/self.  
+- **How**: apply the mask to attention scores **before softmax** (add `-∞` or use a 0/1 mask).
 
-这样，训练时即使一次性输入整个目标序列，也不会信息泄漏。
 
-### (b) BERT 中的 Masking
+## (b) Masking 在 BERT 里怎么用？
+### 中文
+- **训练目标是 MLM（Masked Language Modeling）**：随机选一部分 token（常见约 15%）作为“预测目标”。  
+- **输入侧 mask**：这些位置通常被替换成 `[MASK]`（或随机词/保持不变），让模型利用**双向上下文**来猜原词。  
+- **注意力侧**：BERT 不是因果模型，**不做 look-ahead mask**；主要做 **padding/attention mask**，避免关注 `[PAD]`。  
+- **Loss mask**：只在被选中的 masked positions 上计算预测损失，其余位置不计入 MLM loss。
 
-BERT 使用 Masking 作为 预训练任务（Masked Language Model, MLM）。
+### English
+- **BERT pretraining uses MLM**: randomly select some tokens (often ~15%) as prediction targets.  
+- **Input masking**: replace selected tokens with `[MASK]` (or random/unchanged) so the model predicts them using **bidirectional context**.  
+- **Attention masking**: no causal mask (BERT is not autoregressive); mainly **padding/attention masks** to ignore `[PAD]`.  
+- **Loss masking**: compute MLM loss only on the selected masked positions.
 
-在输入序列中，随机遮盖（Mask）一部分 token（如 15%）。
 
-模型的任务是基于上下文（双向信息）预测被遮盖的原始 token。
+## (c) Masking 如何用于视觉里的遮挡敏感性（occlusion sensitivity）？
+### 中文
+- **核心思想**：人为遮挡（mask）图像的某个局部区域，观察模型输出/置信度变化。  
+- **做法**：用滑动窗口把一块区域替换为 0/均值/模糊块等“遮挡值”，对每个位置重复一次推理。  
+- **解释**：如果遮挡某区域后分类分数大幅下降，说明模型**强依赖**该区域；变化小则说明不重要。  
+- **结果可视化**：把“输出变化量”绘成热力图（importance map），得到模型关注的关键区域。
 
-这使得 BERT 能学习深层的双向语言表征，而不是像从左到右的语言模型那样只看到上文。
+### English
+- **Idea**: mask (occlude) a local image patch and measure how the model’s prediction/confidence changes.  
+- **Method**: slide an occlusion window and replace the patch with zeros/mean/blur, running inference each time.  
+- **Interpretation**: large drop = region is important; small change = less important.  
+- **Output**: visualize changes as a heatmap (occlusion sensitivity map).
 
-注意：BERT 在预训练时使用 [MASK] 符号，但在微调时所有输入 token 都是真实词，不存在 [MASK]，这带来一定的预训练-微调差异，BERT 通过替换部分遮盖词为随机词或原词来缓解。
-
-### (c) 视觉中的遮挡敏感性
-
-遮挡敏感性是一种 可解释性/分析技术，用于理解 CNN 等模型依赖图像的哪些区域进行预测。
-
-方法：在输入图像上用一个灰色方块或模糊区域遮挡一小块区域，然后观察模型预测概率的变化。
-
-通过系统性地滑动遮挡块并记录预测得分，可以生成一个“敏感性图”：如果遮挡某区域导致预测概率大幅下降，说明该区域对模型决策很重要。
-
-这类似于 NLP 中遮盖一个词看句子概率的变化，但在视觉中用于定位关键图像区域。
 
 ---
 
@@ -858,19 +905,43 @@ A GAN consists of two competing neural networks: the Generator ($G$) and the Dis
 
 ### (b)
 
-Mode collapse – the generator produces limited or identical outputs (poor diversity).(PPT)
+### 中文（列点）
+- **训练不稳定/不收敛**：G 和 D 的对抗博弈容易震荡，难以达到平衡。
+- **Mode collapse（模式崩塌）**：生成器只生成少数几种样本，缺乏多样性。
+- **梯度消失/判别器过强**：D 太强时，G 得不到有效梯度更新。
+- **难评估/难调参**：没有明确的似然；对学习率、更新步数比例、正则化等很敏感。
 
-Non-convergence / instability – adversarial training may oscillate instead of converging. (PPT)
-
-Vanishing gradients – if the discriminator becomes too strong, the generator receives almost no gradient signal.
-
-Sensitive hyperparameters – training depends heavily on learning rates, architectures, and batch normalization.
-
-Evaluation difficulty – it’s hard to quantify sample quality objectively.
+### English
+- **Training instability / non-convergence** due to adversarial game dynamics.
+- **Mode collapse** (low diversity outputs).
+- **Vanishing gradients / overly strong discriminator** leading to weak learning signal for G.
+- **Hard evaluation and hyperparameter sensitivity** (no explicit likelihood; many knobs).
 
 Distorted figures (PPT 不算训练中的问题？)
 
 ### (c)
+
+- **判别器在“假样本”上的 loss（目标=0）**：  
+  经典 BCE 里假样本项为  
+  \[
+  L_D^{fake} = -\log(1 - D(G(z))) = -\log(0.8)
+  \]
+  数值约：\(-\ln(0.8)\approx 0.223\)
+
+- **生成器的 loss（目标让 D 认为是真的）** 常见两种写法：  
+  1) **Non-saturating loss（更常用）**  
+  \[
+  L_G = -\log(D(G(z))) = -\log(0.2)
+  \]
+  数值约：\(-\ln(0.2)\approx 1.609\)
+
+  2) **原始 minimax 形式**（较少用，易饱和）  
+  \[
+  L_G^{minimax} = \log(1 - D(G(z))) = \log(0.8)
+  \]
+  数值约：\(\ln(0.8)\approx -0.223\)
+
+> 训练流程一句话：更新 D 让假样本更接近 0；更新 G 让 \(D(G(z))\) 往 1 提升。
 
 The standard GAN uses Binary Cross-Entropy (BCE) loss. When the Discriminator ($D$) outputs a score of $\mathbf{0.2}$ on a generated instance $G(z)$, the training is conducted in two steps:
 
@@ -907,18 +978,22 @@ Summary: The Discriminator gets a relatively small gradient and updates to be sl
 
 ### (d)
 
-A Conditional Generative Adversarial Network (cGAN) using Convolutional Neural Networks (CNNs).
+### 中文
+- **推荐结构**：**Encoder–Decoder / U-Net（卷积网络）**，也常搭配 **cGAN（如 pix2pix）**。  
+- **原因**：上色是像素到像素（image-to-image）的映射任务：  
+  - 卷积能捕捉局部纹理与空间结构；  
+  - Encoder 提取语义，Decoder 还原到像素级输出；  
+  - **U-Net 跳连**保留边缘/细节，减少模糊；  
+  - 用 **cGAN** 可让结果更真实、更锐利（减少平均化的“发灰”）。
 
-Reason:
+### English
+- **Use**: a convolutional **encoder–decoder** model, typically **U-Net**, often with a **conditional GAN** (e.g., pix2pix).
+- **Why**: colorization is an image-to-image task:
+  - CNNs model spatial locality and textures;
+  - encoder captures semantics, decoder reconstructs pixel outputs;
+  - **skip connections** preserve fine details;
+  - **cGAN** encourages sharper, more realistic colors than pure L2 regression.
 
-Input: grayscale (black-and-white) image.
-
-Condition: this grayscale image acts as the conditional input to guide generation.
-
-Generator (CNN-based, often U-Net) learns to output corresponding color channels.
-
-Discriminator checks whether the colored image is realistic given the grayscale input.
-→ CNNs handle spatial features effectively, and conditioning ensures consistent colorization.
 
 | Concept           | What It Is                                                                                                                                                                                       | Level                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
