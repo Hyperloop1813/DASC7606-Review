@@ -1001,26 +1001,17 @@ Summary: The Discriminator gets a relatively small gradient and updates to be sl
 
 ### (e)
 
-图灵测试：判断者与一个人和一个机器通过文本交互，如果判断者无法区分机器和人，则机器通过测试。
+### 中文
+- 图灵测试：**生成者（机器）**尝试让评审（人）分不出真假；评审尽力区分人类/机器输出。  
+- GAN：**生成器 G** 生成样本以“以假乱真”；**判别器 D** 负责判断真/假。  
+- 二者共同点：都是一种“对抗式评判”框架——**生成方不断提高逼真度，判别方不断提升鉴别能力**，最终让生成结果难以区分。
 
-GAN 中的类比：
+### English
+- Turing test: a **generator (machine)** tries to produce outputs indistinguishable from humans, while a **judge** tries to tell real vs fake.
+- GAN: **G** generates samples to fool **D**, and **D** discriminates real vs generated.
+- Similarity: both are **adversarial evaluation games** where improvement comes from the generator and discriminator/judge co-evolving.
 
-判别器 ↔ 判断者
-
-生成器 ↔ 机器
-
-真实数据 ↔ 人的回答
-
-生成数据 ↔ 机器的回答
-
-目标都是让机器（生成器）产生与真人（真实数据）无法区分的结果，从而骗过判断者（判别器）。
-
-The Turing Test evaluates whether a machine can generate outputs indistinguishable from a human’s.
-
-Similarly, in a GAN, the discriminator acts like the human judge, and the generator acts like the machine trying to fool it.
-
-The goal: the generator produces data so realistic that the discriminator can’t tell it apart from real data (ideally 50/50 confusion).
-→ Thus, GAN training is an automated version of the Turing test in the data domain.
+---
 
 ## Q3 2022 May 2
 
